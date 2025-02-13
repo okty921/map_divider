@@ -3,6 +3,7 @@ map_divider_node:
     pcd_path: "/home/kazuma/map_ws/src/map_divider/data/indoor_outdoor_raw.pcd"
     waypoints_path: "/home/kazuma/map_ws/src/map_divider/data/indoor_outdoor_wp.csv"
     output_pcd_name: "indoor_outdoor"
+    output_waypoints_name: "indoor_outdoor_divide_wp"
     waypoint_interpolation_step: 1.0
     sensor_max_range: 50.0
     sensor_min_elev_deg: -30.0
