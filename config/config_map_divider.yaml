@@ -7,11 +7,7 @@ map_divider_node:
     sensor_max_range: 50.0
     sensor_min_elev_deg: -30.0
     sensor_max_elev_deg: 30.0
-    horiz_res_deg: 1.0
-    vert_res_deg: 1.0
-    tube_radius: 0.1
-    cluster_tolerance: 2.0
-    min_cluster_size: 5
-    max_cluster_size: 1000
+    octomap_resolution: 0.2
+    dilation_radius: 0.2
     dedup_leaf_size: 0.1
     map_divide_step: 15.0

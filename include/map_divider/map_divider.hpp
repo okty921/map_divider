@@ -17,6 +17,7 @@
 #include <queue>
 #include <boost/filesystem.hpp>
 
+#include <octomap/octomap.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/segmentation/extract_clusters.h>
@@ -53,7 +54,7 @@ public:
   void setSensorPosition(float x, float y, float z);
   std::vector<geometry_msgs::msg::Point> loadWaypoint(const std::string & file_name);
   void preprocessPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud);
-  void clusterUsingCylindricalBins(const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr & selected_cloud, float tube_radius);
+  void occlusionFilter(const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr & selected_cloud);
   void processWaypoints();
   pcl::PointCloud<pcl::PointXYZ>::Ptr removeDuplicates(const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud, float leaf_size);
 
@@ -67,12 +68,8 @@ private:
   float sensor_max_range_;
   float sensor_min_elev_deg_;
   float sensor_max_elev_deg_;
-  float horiz_res_deg_;
-  float vert_res_deg_;
-  float tube_radius_;
-  float cluster_tolerance_;
-  int min_cluster_size_;
-  int max_cluster_size_;
+  float octomap_resolution_;
+  float dilation_radius_;
   float dedup_leaf_size_;
   float map_divide_step_;
 
