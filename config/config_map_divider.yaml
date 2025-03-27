@@ -1,7 +1,7 @@
 map_divider_node:
   ros__parameters:
-    pcd_path: "/home/kazuma/map_ws/src/map_divider/data/indoor_outdoor_raw.pcd"
-    waypoints_path: "/home/kazuma/map_ws/src/map_divider/data/indoor_outdoor_wp.csv"
+    pcd_path: "/home/okty/map_divider_dev_ws/src/map_divider/data/indoor_outdoor_raw.pcd"
+    waypoints_path: "/home/okty/map_divider_dev_ws/src/map_divider/data/indoor_outdoor_wp.csv"
     output_pcd_name: "indoor_outdoor"
     waypoint_interpolation_step: 1.0
     sensor_max_range: 50.0
