@@ -17,9 +17,13 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+find_package(Open3D REQUIRED)
+
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}.cpp
 )
+
+target_link_libraries(${PROJECT_NAME} Open3D::Open3D)
 
 if(OpenMP_CXX_FOUND)
   target_link_libraries(${PROJECT_NAME} ${OpenMP_CXX_LIBRARIES})
@@ -30,15 +34,8 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
-
 ament_auto_package(
   INSTALL_TO_SHARE
   config
   launch
 )
-
-install(FILES DESTINATION share/${PROJECT_NAME})
