@@ -32,11 +32,8 @@ public:
 
   void setSensorPosition(double x, double y, double z);
   std::vector<geometry_msgs::msg::Point> loadWaypoint(const std::string & file_name);
-  void preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> & cloud);
-  void occlusionFilter(const std::shared_ptr<open3d::geometry::PointCloud> & cloud, std::shared_ptr<open3d::geometry::PointCloud> & selected_cloud);
+  open3d::geometry::PointCloud preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud);
   void processWaypoints();
-  void StatisticalFilter(std::shared_ptr<open3d::geometry::PointCloud> & cloud);
-  std::shared_ptr<open3d::geometry::PointCloud> VoxelDownSample(std::shared_ptr<open3d::geometry::PointCloud> & cloud);
 private:
 
   // Parameters
@@ -49,7 +46,7 @@ private:
   double sensor_max_elev_deg_;
   size_t nb_neighbors_;
   double std_ratio_;
-  double octomap_resolution_;
+  double hpr_radius_;
   double dilation_radius_;
   double voxel_size_;
   double map_divide_step_;

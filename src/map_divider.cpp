@@ -14,7 +14,7 @@ MapDivider::MapDivider(const rclcpp::NodeOptions & options) : Node("map_divider"
   declare_parameter<double>("sensor_max_elev_deg", 30.0);
   declare_parameter<int>("nb_neighbors", 12);
   declare_parameter<double>("std_ratio", 1.8);
-  declare_parameter<double>("octomap_resolution", 0.3);
+  declare_parameter<double>("hpr_radius", 150000.0);
   declare_parameter<double>("dilation_radius", 0.1);
   declare_parameter<double>("voxel_size", 0.1);
   declare_parameter<double>("map_divide_step", 0.5);
@@ -29,7 +29,7 @@ MapDivider::MapDivider(const rclcpp::NodeOptions & options) : Node("map_divider"
   get_parameter("sensor_min_elev_deg", sensor_min_elev_deg_);
   get_parameter("nb_neighbors", nb_neighbors_);
   get_parameter("std_ratio", std_ratio_);
-  get_parameter("octomap_resolution", octomap_resolution_);
+  get_parameter("hpr_radius", hpr_radius_);
   get_parameter("dilation_radius", dilation_radius_);
   get_parameter("voxel_size", voxel_size_);
   get_parameter("map_divide_step", map_divide_step_);
@@ -43,7 +43,7 @@ MapDivider::MapDivider(const rclcpp::NodeOptions & options) : Node("map_divider"
   RCLCPP_INFO(get_logger(), "FOV: [%f, %f] deg", sensor_min_elev_deg_, sensor_max_elev_deg_);
   RCLCPP_INFO(get_logger(), "nb_neighbors: %ld", nb_neighbors_);
   RCLCPP_INFO(get_logger(), "std_ratio: %f", std_ratio_);
-  RCLCPP_INFO(get_logger(), "octomap_resolution: %f", octomap_resolution_);
+  RCLCPP_INFO(get_logger(), "hpr_radius: %f", hpr_radius_);
   RCLCPP_INFO(get_logger(), "dilation_radius: %f", dilation_radius_);
   RCLCPP_INFO(get_logger(), "voxel_size: %f", voxel_size_);
   RCLCPP_INFO(get_logger(), "map_divide_step: %f", map_divide_step_);
@@ -138,7 +138,7 @@ std::vector<geometry_msgs::msg::Point> MapDivider::loadWaypoint(const std::strin
   return interpolated_waypoints;
 }
 
-void MapDivider::preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> & cloud)
+open3d::geometry::PointCloud MapDivider::preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud)
 {
   open3d::geometry::PointCloud filtered_cloud;
   filtered_cloud.points_.reserve(cloud->points_.size());
@@ -164,77 +164,7 @@ void MapDivider::preprocessPointCloud(std::shared_ptr<open3d::geometry::PointClo
       filtered_cloud.points_.push_back(pt);
     }
   }
-
-  auto filtered_cloud_ptr = std::make_shared<open3d::geometry::PointCloud>(filtered_cloud);
-  cloud.swap(filtered_cloud_ptr);
-}
-
-void MapDivider::StatisticalFilter(std::shared_ptr<open3d::geometry::PointCloud> & cloud)
-{
-  open3d::geometry::PointCloud statistical_filterd_cloud;
-  statistical_filterd_cloud = *cloud;
-
-  statistical_filterd_cloud.RemoveStatisticalOutliers(nb_neighbors_, std_ratio_);
-
-  auto statistical_filterd_cloud_ptr = std::make_shared<open3d::geometry::PointCloud>(statistical_filterd_cloud);
-  cloud.swap(statistical_filterd_cloud_ptr);
-}
-
-void MapDivider::occlusionFilter(const std::shared_ptr<open3d::geometry::PointCloud> & cloud,
-                                 std::shared_ptr<open3d::geometry::PointCloud> & selected_cloud)
-{
-  octomap::OcTree tree(octomap_resolution_);
-
-  octomap::point3d bbx_min(-200, -200, -20);
-  octomap::point3d bbx_max(200, 200, 20);
-
-  tree.setBBXMin(bbx_min);
-  tree.setBBXMax(bbx_max);
-  tree.useBBXLimit(true);
-
-  for (const auto & point : cloud->points_)
-    tree.updateNode(octomap::point3d(point(0), point(1), point(2)), true);
-  tree.updateInnerOccupancy();
-
-  octomap::point3d observation_point(sensor_pos_x_, sensor_pos_y_, sensor_pos_z_);
-  for (const auto & point : cloud->points_)
-  {
-    octomap::point3d target(point(0), point(1), point(2));
-    octomap::point3d vec = target - observation_point;
-    double distance = vec.norm();
-
-    if (distance < std::numeric_limits<double>::epsilon()) {
-      selected_cloud->points_.push_back(point);
-      continue;
-    }
-
-    octomap::point3d direction = vec * (1.0 / distance);
-    octomap::point3d hit_point;
-    bool hit_found = tree.castRay(observation_point, direction, hit_point, distance);
-    if (hit_found) { 
-      double hit_distance = (hit_point - observation_point).norm();
-      if (hit_distance < distance - octomap_resolution_)
-        continue;
-    }
-    selected_cloud->points_.push_back(point);
-  }
-
-  open3d::geometry::KDTreeFlann kd_tree(*selected_cloud);
-  for (const auto & point : cloud->points_)
-  {
-    std::vector<int> indices;
-    std::vector<double> sqr_distance;
-    if (kd_tree.SearchRadius(point, dilation_radius_,indices, sqr_distance) > 0)
-      selected_cloud->points_.push_back(point);
-  }
-}
-
-std::shared_ptr<open3d::geometry::PointCloud> MapDivider::VoxelDownSample(std::shared_ptr<open3d::geometry::PointCloud> & cloud)
-{
-  std::shared_ptr<open3d::geometry::PointCloud> downsampled_cloud;
-  auto ptr_cloud = open3d::geometry::PointCloud(*cloud);
-  downsampled_cloud = ptr_cloud.VoxelDownSample(voxel_size_);
-  return downsampled_cloud;
+  return filtered_cloud;
 }
 
 void MapDivider::processWaypoints()
@@ -246,32 +176,29 @@ void MapDivider::processWaypoints()
     RCLCPP_ERROR(get_logger(), "Failed to load map from: %s", pcd_path_.c_str());
   }
 
-  auto accmulated_cloud = std::make_shared<open3d::geometry::PointCloud>();
-  accmulated_cloud->points_.clear();
-
   geometry_msgs::msg::Point base_wp;
   bool first_wp = true;
   size_t group_index = 0;
+  open3d::geometry::PointCloud filterd_cloud;
+  open3d::geometry::PointCloud result_cloud;
 
   for (size_t i=0; i < waypoints_data_.size(); i++)
   {
-    auto cloud_copy = std::make_shared<open3d::geometry::PointCloud>(original_cloud);
     geometry_msgs::msg::Point current_wp = waypoints_data_[i];
-
+    Eigen::Vector3d current_pos(current_wp.x, current_wp.y, current_wp.z);
     setSensorPosition(current_wp.x, current_wp.y, current_wp.z);
-    preprocessPointCloud(cloud_copy);
-    StatisticalFilter(cloud_copy);
+    auto [mesh, visible_indices] = original_cloud.HiddenPointRemoval(current_pos, hpr_radius_);
+    auto hpr_filterd_cloud = original_cloud.SelectByIndex(visible_indices);
 
-    auto selected_cloud_ptr = std::make_shared<open3d::geometry::PointCloud>();
-    occlusionFilter(cloud_copy, selected_cloud_ptr);
-    std::shared_ptr<open3d::geometry::PointCloud> downsampled_cloud;
-    downsampled_cloud = VoxelDownSample(selected_cloud_ptr);
+    filterd_cloud = preprocessPointCloud(hpr_filterd_cloud);
+    filterd_cloud.RemoveStatisticalOutliers(nb_neighbors_, std_ratio_);
+    filterd_cloud.VoxelDownSample(voxel_size_);
 
     if(first_wp)
     {
-      accmulated_cloud->points_.insert(accmulated_cloud->points_.end(), 
-                                        downsampled_cloud->points_.begin(),
-                                        downsampled_cloud->points_.end());
+      result_cloud.points_.insert(result_cloud.points_.end(), 
+                                        filterd_cloud.points_.begin(),
+                                        filterd_cloud.points_.end());
       base_wp = current_wp;
       first_wp = false;
     }
@@ -284,40 +211,39 @@ void MapDivider::processWaypoints()
 
       if (dist < map_divide_step_)
       {
-        accmulated_cloud->points_.insert(accmulated_cloud->points_.end(),
-                                          downsampled_cloud->points_.begin(),
-                                          downsampled_cloud->points_.end());
+        result_cloud.points_.insert(result_cloud.points_.end(),
+                                          filterd_cloud.points_.begin(),
+                                          filterd_cloud.points_.end());
       }
       else
       {
-        if (!accmulated_cloud->points_.empty())
+        if (!result_cloud.points_.empty())
         {
-          auto vds_cloud = VoxelDownSample(accmulated_cloud);
+          result_cloud.VoxelDownSample(voxel_size_);
           
           std::stringstream ss;
           ss << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".pcd";
           std::string output_file_ = ss.str();
-          open3d::io::WritePointCloud(output_file_, *vds_cloud);
+          open3d::io::WritePointCloud(output_file_, result_cloud);
           RCLCPP_INFO(get_logger(), "Save merged map for group %ld with %ld points to %s",
-                      group_index, vds_cloud->points_.size(), output_file_.c_str());
+                      group_index, result_cloud.points_.size(), output_file_.c_str());
           group_index++;
         }
-        accmulated_cloud->points_ = selected_cloud_ptr->points_;
+        result_cloud.points_ = filterd_cloud.points_;
         base_wp = current_wp;
       }
     }
   }
-  if (!accmulated_cloud->points_.empty())
+  if (!result_cloud.points_.empty())
   {
-    auto vds_cloud = VoxelDownSample(accmulated_cloud);
+    result_cloud.VoxelDownSample(voxel_size_);
           
     std::stringstream ss;
     ss << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".pcd";
     std::string output_file_ = ss.str();
-    open3d::io::WritePointCloud(output_file_, *vds_cloud);
+    open3d::io::WritePointCloud(output_file_, result_cloud);
     RCLCPP_INFO(get_logger(), "Save merged map for group %ld with %ld points to %s",
-                group_index, vds_cloud->points_.size(), output_file_.c_str());
-
+                group_index, result_cloud.points_.size(), output_file_.c_str());
   }
 }
 

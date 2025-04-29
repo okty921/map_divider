@@ -9,7 +9,7 @@ map_divider_node:
     sensor_max_elev_deg: 30.0
     nb_neighbors: 12
     std_ratio: 1.8
-    octomap_resolution: 0.2
+    hpr_radius: 150000.0
     dilation_radius: 0.2
-    dedup_leaf_size: 0.1
+    voxel_size: 0.1
     map_divide_step: 15.0
