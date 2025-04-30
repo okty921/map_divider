@@ -50,6 +50,8 @@ private:
   double dilation_radius_;
   double voxel_size_;
   double map_divide_step_;
+  double save_voxel_size_;
+
 
   // State Variables
   std::vector<geometry_msgs::msg::Point> waypoints_data_;

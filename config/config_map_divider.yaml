@@ -9,7 +9,8 @@ map_divider_node:
     sensor_max_elev_deg: 30.0
     nb_neighbors: 12
     std_ratio: 1.8
-    hpr_radius: 150000.0
+    hpr_radius: 40000.0
     dilation_radius: 0.2
     voxel_size: 0.1
     map_divide_step: 15.0
+    save_voxel_size : 0.4
