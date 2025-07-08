@@ -189,17 +189,17 @@ void MapDivider::processWaypoints()
         {
           auto saved_ptr = result_ptr->VoxelDownSample(save_voxel_size_);
 
-          saved_ptr->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.02, 30));
-          saved_ptr->OrientNormalsConsistentTangentPlane(100);
-          std::vector<double> nn = saved_ptr->ComputeNearestNeighborDistance();
-          double avg_dist = std::accumulate(nn.begin(), nn.end(), 0.0) / static_cast<double>(nn.size());
-          std::vector<double> radii = {1.5 * avg_dist, 2.0 * avg_dist, 3.0 * avg_dist};
-          auto mesh = open3d::geometry::TriangleMesh::CreateFromPointCloudBallPivoting(*saved_ptr, radii);
-          mesh->ComputeVertexNormals();
-          std::stringstream ssm;
-          ssm << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".ply";
-          std::string output_file_mesh = ssm.str();
-          open3d::io::WriteTriangleMesh(output_file_mesh, *mesh);
+          // saved_ptr->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.02, 30));
+          // saved_ptr->OrientNormalsConsistentTangentPlane(100);
+          // std::vector<double> nn = saved_ptr->ComputeNearestNeighborDistance();
+          // double avg_dist = std::accumulate(nn.begin(), nn.end(), 0.0) / static_cast<double>(nn.size());
+          // std::vector<double> radii = {1.5 * avg_dist, 2.0 * avg_dist, 3.0 * avg_dist};
+          // auto mesh = open3d::geometry::TriangleMesh::CreateFromPointCloudBallPivoting(*saved_ptr, radii);
+          // mesh->ComputeVertexNormals();
+          // std::stringstream ssm;
+          // ssm << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".ply";
+          // std::string output_file_mesh = ssm.str();
+          // open3d::io::WriteTriangleMesh(output_file_mesh, *mesh);
 
           std::stringstream ss;
           ss << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".pcd";
@@ -233,17 +233,17 @@ void MapDivider::processWaypoints()
   {
     auto saved_ptr = result_ptr->VoxelDownSample(save_voxel_size_);
 
-    saved_ptr->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.02, 30));
-    saved_ptr->OrientNormalsConsistentTangentPlane(100);
-    std::vector<double> nn = saved_ptr->ComputeNearestNeighborDistance();
-    double avg_dist = std::accumulate(nn.begin(), nn.end(), 0.0) / static_cast<double>(nn.size());
-    std::vector<double> radii = {1.5 * avg_dist, 2.0 * avg_dist, 3.0 * avg_dist};
-    auto mesh = open3d::geometry::TriangleMesh::CreateFromPointCloudBallPivoting(*saved_ptr, radii);
-    mesh->ComputeVertexNormals();
-    std::stringstream ssm;
-    ssm << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".ply";
-    std::string output_file_mesh = ssm.str();
-    open3d::io::WriteTriangleMesh(output_file_mesh, *mesh);
+    // saved_ptr->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.02, 30));
+    // saved_ptr->OrientNormalsConsistentTangentPlane(100);
+    // std::vector<double> nn = saved_ptr->ComputeNearestNeighborDistance();
+    // double avg_dist = std::accumulate(nn.begin(), nn.end(), 0.0) / static_cast<double>(nn.size());
+    // std::vector<double> radii = {1.5 * avg_dist, 2.0 * avg_dist, 3.0 * avg_dist};
+    // auto mesh = open3d::geometry::TriangleMesh::CreateFromPointCloudBallPivoting(*saved_ptr, radii);
+    // mesh->ComputeVertexNormals();
+    // std::stringstream ssm;
+    // ssm << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".ply";
+    // std::string output_file_mesh = ssm.str();
+    // open3d::io::WriteTriangleMesh(output_file_mesh, *mesh);
 
     std::stringstream ss;
     std::string output_file_ = ss.str();
