@@ -4,13 +4,12 @@ map_divider_node:
     waypoints_path: "/home/okty/map_divider_dev_ws/src/map_divider/data/indoor_outdoor_wp.csv"
     output_pcd_name: "indoor_outdoor"
     waypoint_interpolation_step: 1.0
-    sensor_max_range: 50.0
+    sensor_max_range: 35.0
     sensor_min_elev_deg: -30.0
     sensor_max_elev_deg: 30.0
-    nb_neighbors: 12
+    nb_neighbors: 18
     std_ratio: 1.8
     hpr_radius: 40000.0
-    dilation_radius: 0.2
     voxel_size: 0.1
-    map_divide_step: 15.0
-    save_voxel_size : 0.4
+    map_divide_step: 10.0
+    save_voxel_size : 0.1

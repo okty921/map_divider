@@ -25,6 +25,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
+#include <time.h>
+#include <stdio.h>
+
 class MapDivider : public rclcpp::Node
 {
 public:
@@ -47,7 +50,6 @@ private:
   size_t nb_neighbors_;
   double std_ratio_;
   double hpr_radius_;
-  double dilation_radius_;
   double voxel_size_;
   double map_divide_step_;
   double save_voxel_size_;
