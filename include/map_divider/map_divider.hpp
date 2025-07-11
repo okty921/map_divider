@@ -35,6 +35,7 @@ public:
 
   void setSensorPosition(double x, double y, double z);
   std::vector<geometry_msgs::msg::Point> loadWaypoint(const std::string & file_name);
+  std::shared_ptr<open3d::geometry::PointCloud> VoxelDownPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud);
   open3d::geometry::PointCloud preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud);
   void processWaypoints();
 private:

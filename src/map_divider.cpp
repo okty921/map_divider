@@ -29,7 +29,7 @@ MapDivider::MapDivider(const rclcpp::NodeOptions & options) : Node("map_divider"
   get_parameter("hpr_radius", hpr_radius_);
   get_parameter("voxel_size", voxel_size_);
   get_parameter("map_divide_step", map_divide_step_);
-  get_parameter("voxel_size", save_voxel_size_);
+  get_parameter("save_voxel_size", save_voxel_size_);
   //Log parameter values
   RCLCPP_INFO(get_logger(), "pcd_path: %s", pcd_path_.c_str());
   RCLCPP_INFO(get_logger(), "waypoints_path: %s", waypoints_path_.c_str());
@@ -42,7 +42,7 @@ MapDivider::MapDivider(const rclcpp::NodeOptions & options) : Node("map_divider"
   RCLCPP_INFO(get_logger(), "hpr_radius: %f", hpr_radius_);
   RCLCPP_INFO(get_logger(), "voxel_size: %f", voxel_size_);
   RCLCPP_INFO(get_logger(), "map_divide_step: %f", map_divide_step_);
-  RCLCPP_INFO(get_logger(), "voxel_size: %f", save_voxel_size_);
+  RCLCPP_INFO(get_logger(), "save_voxel_size: %f", save_voxel_size_);
   //Create output directory if it doesn't exist
   if (!fs::exists(output_pcd_name_))
   {
@@ -124,6 +124,18 @@ std::vector<geometry_msgs::msg::Point> MapDivider::loadWaypoint(const std::strin
   }
   return interpolated_waypoints;
 }
+
+std::shared_ptr<open3d::geometry::PointCloud> MapDivider::VoxelDownPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud)
+{
+ auto voxeldowncloud = std::make_shared<open3d::geometry::PointCloud>();
+ auto voxel_grid = open3d::geometry::VoxelGrid::CreateFromPointCloud(*cloud, save_voxel_size_);
+ for (const auto& voxel : voxel_grid->GetVoxels()) { 
+  Eigen::Vector3d center = voxel_grid->GetVoxelCenterCoordinate(voxel.grid_index_);
+  voxeldowncloud->points_.push_back(center);
+ }
+  return voxeldowncloud;
+}
+
 open3d::geometry::PointCloud MapDivider::preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud)
 {
   open3d::geometry::PointCloud filtered_cloud;
@@ -187,7 +199,7 @@ void MapDivider::processWaypoints()
       {
         if (!result_ptr->points_.empty())
         {
-          auto saved_ptr = result_ptr->VoxelDownSample(save_voxel_size_);
+          auto saved_ptr = VoxelDownPointCloud(result_ptr);
 
           // saved_ptr->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.02, 30));
           // saved_ptr->OrientNormalsConsistentTangentPlane(100);
@@ -205,8 +217,8 @@ void MapDivider::processWaypoints()
           ss << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".pcd";
           std::string output_file_ = ss.str();
           open3d::io::WritePointCloud(output_file_, *saved_ptr);
-          RCLCPP_INFO(get_logger(), "Save merged map for group %ld with %ld points to %s",
-                      group_index, saved_ptr->points_.size(), output_file_.c_str());
+          // RCLCPP_INFO(get_logger(), "Save merged map for group %ld with %ld points to %s",
+          //             group_index, saved_ptr->points_.size(), output_file_.c_str());
 
           double fitness_score = 0;
           std::vector<int> indices;
@@ -231,7 +243,7 @@ void MapDivider::processWaypoints()
   }
   if (!result_ptr->points_.empty())
   {
-    auto saved_ptr = result_ptr->VoxelDownSample(save_voxel_size_);
+    auto saved_ptr = VoxelDownPointCloud(result_ptr);
 
     // saved_ptr->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.02, 30));
     // saved_ptr->OrientNormalsConsistentTangentPlane(100);
@@ -249,8 +261,8 @@ void MapDivider::processWaypoints()
     std::string output_file_ = ss.str();
     ss << output_pcd_name_ << "/" << output_pcd_name_ << "_" << group_index << ".pcd";
     open3d::io::WritePointCloud(ss.str(), *saved_ptr);
-    RCLCPP_INFO(get_logger(), "Save merged map for group %ld with %ld points to %s",
-                group_index, saved_ptr->points_.size(), output_file_.c_str());
+    // RCLCPP_INFO(get_logger(), "Save merged map for group %ld with %ld points to %s",
+    //             group_index, saved_ptr->points_.size(), output_file_.c_str());
 
     double fitness_score = 0;
     std::vector<int> indices;
